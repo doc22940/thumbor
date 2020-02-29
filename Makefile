@@ -24,7 +24,7 @@ ci_test: build
 	@echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 	@echo "TORNADO IS `python -c 'import tornado; import inspect; print(inspect.getfile(tornado))'`"
 	@echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-	@if [ "$$LINT_TEST" ]; then $(MAKE) flake; elif [ "$$PERF_TEST" ]; then $(MAKE) perf; elif [ -z "$$INTEGRATION_TEST" ]; then $(MAKE) unit coverage; else $(MAKE) integration_run; fi
+	@if [ "$$LINT_TEST" ]; then $(MAKE) flake; elif [ "$$PERF_TEST" ]; then $(MAKE) long-perf; elif [ -z "$$INTEGRATION_TEST" ]; then $(MAKE) unit coverage; else $(MAKE) integration_run; fi
 
 integration_run integration int:
 	@poetry run pytest -sv integration_tests/ -p no:tldr
@@ -68,7 +68,10 @@ perf-stop-daemon:
 	@start-stop-daemon -q --stop --oknodo --remove-pidfile --pidfile /tmp/thumbor-perf.pid > /dev/null 2>&1
 
 perf: perf-start-daemon
-	@cd perf && bash run.sh
+	@cd perf && DURATION=10 bash run.sh
+
+long-perf: perf-start-daemon
+	@cd perf && DURATION=240 bash run.sh
 
 sample_images:
 	convert -delay 100 -size 100x100 gradient:blue gradient:red -loop 0 integration_tests/imgs/animated.gif
