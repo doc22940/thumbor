@@ -1,28 +1,21 @@
-.PHONY: docs build
+.PHONY: docs build perf
 
 OS := $(shell uname)
 
 run: compile_ext
 	@thumbor -l debug -d -c thumbor/thumbor.conf
 
+run-uv: compile_ext
+	@thumbor -l debug -d --uvloop -c thumbor/thumbor.conf
+
+run-prod: compile_ext
+	@thumbor -l error -c thumbor/thumbor.conf
+
+run-prod-uv: compile_ext
+	@thumbor -l error --uvloop -c thumbor/thumbor.conf
+
 setup:
 	@poetry install
-
-# Leaving this for future reference of committers.
-# setup_ubuntu:
-	# @sudo apt-get install -y imagemagick webp coreutils gifsicle libvpx? \
-                             # libvpx-dev libimage-exiftool-perl libcairo2-dev \
-                             # ffmpeg libcurl4-openssl-dev libffi-dev \
-                             # python-dev python3-dev
-# setup_mac:
-	# @brew tap brewsci/science
-	# @brew update
-	# @brew install imagemagick webp opencv coreutils gifsicle libvpx exiftool cairo
-	# @brew install ffmpeg --with-libvpx
-	# @opencv_path=`realpath $$(dirname $$(brew --prefix opencv))/$$(readlink $$(brew --prefix opencv))`; \
-		# echo 'Enter in your site-packages directory and run the following lines:';\
-		# echo "ln -s $$opencv_path/lib/python2.7/site-packages/cv.py ./";\
-		# echo "ln -s $$opencv_path/lib/python2.7/site-packages/cv2.so ./"
 
 compile_ext build:
 	@poetry build
@@ -72,6 +65,9 @@ build_docs:
 
 docs:
 	@poetry run sphinx-reload --host 0.0.0.0 --port 5555 docs/
+
+perf perf-dry:
+	@cd perf && bash -c ./run.sh
 
 sample_images:
 	convert -delay 100 -size 100x100 gradient:blue gradient:red -loop 0 integration_tests/imgs/animated.gif
