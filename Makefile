@@ -71,7 +71,7 @@ perf: perf-start-daemon
 	@cd perf && DURATION=10 bash run.sh
 
 long-perf: perf-start-daemon
-	@cd perf && DURATION=240 bash run.sh
+	@cd perf && P95=6000 DURATION=240 bash run.sh
 
 sample_images:
 	convert -delay 100 -size 100x100 gradient:blue gradient:red -loop 0 integration_tests/imgs/animated.gif
