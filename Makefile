@@ -5,14 +5,8 @@ OS := $(shell uname)
 run: compile_ext
 	@thumbor -l debug -d -c thumbor/thumbor.conf
 
-run-uv: compile_ext
-	@thumbor -l debug -d --uvloop -c thumbor/thumbor.conf
-
 run-prod: compile_ext
 	@thumbor -l error -c thumbor/thumbor.conf
-
-run-prod-uv: compile_ext
-	@thumbor -l error --uvloop -c thumbor/thumbor.conf
 
 setup:
 	@poetry install
@@ -66,8 +60,15 @@ build_docs:
 docs:
 	@poetry run sphinx-reload --host 0.0.0.0 --port 5555 docs/
 
-perf perf-dry:
-	@cd perf && bash -c ./run.sh
+perf-start-daemon: perf-stop-daemon
+	@start-stop-daemon -d `pwd`/perf --make-pidfile --background --start --pidfile /tmp/thumbor-perf.pid --exec `which poetry` -- run thumbor -l error -c ./thumbor.conf
+
+# if you change this, also change in run.sh
+perf-stop-daemon:
+	@start-stop-daemon -q --stop --oknodo --remove-pidfile --pidfile /tmp/thumbor-perf.pid > /dev/null 2>&1
+
+perf: perf-start-daemon
+	@cd perf && bash run.sh
 
 sample_images:
 	convert -delay 100 -size 100x100 gradient:blue gradient:red -loop 0 integration_tests/imgs/animated.gif

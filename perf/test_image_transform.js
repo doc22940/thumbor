@@ -1,11 +1,14 @@
 import http from 'k6/http';
 import { check } from 'k6';
+import { Rate } from 'k6/metrics';
 
 const maxVU = __ENV.CONCURRENCY || 10;
 const wait = __ENV.WAIT || 5;
-const warmup = __ENV.WARMUP || 2;
-const duration = __ENV.DURATION || 5;
+const warmup = __ENV.WARMUP || 5;
+const duration = __ENV.DURATION || 50;
 const threshold = __ENV.P95 || 3000;
+
+const failRate = new Rate('failed requests');
 
 export let options = {
   stages: [
@@ -15,6 +18,7 @@ export let options = {
   ],
   thresholds: {
     'http_req_duration': [`p(95)<${threshold}`], // 95% of requests must complete below 3s
+    'failed requests': ['rate<0.001'],
   }
 };
 
@@ -68,6 +72,7 @@ export default function() {
 
     const checks = {};
     checks[`${name} status was 200`] = r => r.status === 200;
+    failRate.add(res.status !== 200);
 
     check(res, checks);
   }
